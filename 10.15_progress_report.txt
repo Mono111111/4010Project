@@ -5,8 +5,8 @@ SurviveSnake Agent
 
 #Group Members:
 Wenjing Huang (101261410)
- Siqi Huang (101284265)
- Zhimei Li (101258414)
+Siqi Huang (101284265)
+Zhimei Li (101258414)
 
 #What we have done:
 We reviewed several research papers on reinforcement learning and Snake-related projects to understand existing methods and design ideas.
@@ -22,7 +22,7 @@ Prepare to implement SARSA for comparison in the following phase.
 
 #Novelty:
 Unlike the traditional Snake Game, we plan to start from scratch to create an environment and add the following features to create a new game:
-Dual goals of energy and score： The addition of these two designs will require the intelligent agent to strike a balance between the two goals of energy conservation and score improvement.
+Dual goals of energy and score: The addition of these two designs will require the intelligent agent to strike a balance between the two goals of energy conservation and score improvement.
 Obstacle Design: We plan to introduce two different types of obstacles into the environment, namely static obstacles and dynamic obstacles, in order to verify the performance of the intelligent agents in both static and non-static environments.
 Static Obstacle: The Static obstacle will remain stationary. If the agent collides with them, 10 points of energy will be deducted.
 Dynamic Obstacle: The dynamic obstacle will move along a fixed path on the map. If the agent collides with it, 5 points of score will be deducted.
@@ -106,3 +106,4 @@ Finalize experiments and generate plots (learning curves, performance metrics).
 Write the final project report
 
 Note: This incremental development plan outlines our current roadmap, but the timeline and tasks may be adjusted as implementation progresses and new challenges or insights arise.
+
