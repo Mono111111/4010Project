@@ -1,0 +1,108 @@
+Project Progress Update - Oct 15, 2025 
+
+#Project Title:
+SurviveSnake Agent
+
+#Group Members:
+Wenjing Huang (101261410)
+ Siqi Huang (101284265)
+ Zhimei Li (101258414)
+
+#What we have done:
+We reviewed several research papers on reinforcement learning and Snake-related projects to understand existing methods and design ideas.
+We studied Q-learning, reward shaping, and energy-based reward systems to design our own environment.
+We discussed how to make the game more realistic by adding an energy bar and static obstacles.
+We completed and refined our full project proposal, including literature references, algorithm plans, and development milestones.
+
+#Plans for the next two weeks:
+Finish coding the initial version of the environment and test it with a random agent. 
+Implement Q-learning as the baseline and collect preliminary results. 
+Add static obstacles and adjust reward functions as needed.
+Prepare to implement SARSA for comparison in the following phase.
+
+#Novelty:
+Unlike the traditional Snake Game, we plan to start from scratch to create an environment and add the following features to create a new game:
+Dual goals of energy and score： The addition of these two designs will require the intelligent agent to strike a balance between the two goals of energy conservation and score improvement.
+Obstacle Design: We plan to introduce two different types of obstacles into the environment, namely static obstacles and dynamic obstacles, in order to verify the performance of the intelligent agents in both static and non-static environments.
+Static Obstacle: The Static obstacle will remain stationary. If the agent collides with them, 10 points of energy will be deducted.
+Dynamic Obstacle: The dynamic obstacle will move along a fixed path on the map. If the agent collides with it, 5 points of score will be deducted.
+Probabilistic Food: We have added a time-limited lifespan design to the basic food logic, introduced time constraints, and tested the performance of the intelligent agents within the limited time frame. Each food item has a lifespan of 30 seconds. If it is not consumed in time, it will disappear and regenerate at a random location.
+Map Boundary Loop: The edges of the map are interconnected. If an agent encounters an edge, it will appear at the corresponding position on the other side.
+Self-Bite Penalty: If the agent encounters a situation where it cannot immediately complete the game, it will deduct 10 points of energy. If the energy level is still greater than 0, the game will continue.
+
+#We define our environment as an MDP:
+State:
+Snake head position (x, y) 
+Snake body coordinates (list of positions) 
+Energy value (0–100) 
+Current score Positions and types of foods (normal, mystery) 
+Positions of static and dynamic obstacles 
+Timer for food expiration (if implemented)
+Action:
+Up, Down, Left, Right
+Reward:
++5 energy and + 5  score for normal food
+Mystery food: probabilistic outcome (e.g., +50 score (5% ),  +10 score (15%), −10 score (10%), teleport (20%), −5 score (50%)
+−1 per move (energy consumption) 
+−10 for self-bite 
+−10 energy for hitting static obstacle 
+−5 score for hitting dynamic obstacle 
+0 otherwise
+Transition:
+Deterministic movement based on chosen action 
+Random respawn of food when consumed or expired 
+Randomized outcomes for mystery food 
+Teleportation across map boundaries
+Discount Factor:
+Typically γ ∈ [0.9, 0.99], to balance long-term survival with immediate food acquisition.
+
+#Algorithms to be Implemented:
+Our current plan is to implement and compare three RL algorithms:
+Q-learning: A classic off-policy TD control algorithm that we will use as a baseline. It helps evaluate whether a simple tabular agent can balance energy consumption and food collection in our environment.
+SARSA: An on-policy TD algorithm that updates based on actual actions. It allows us to study how exploration-sensitive learning performs under stochastic outcomes such as mystery food and teleportation.
+Deep Q-Network (DQN): A deep RL extension of Q-learning that uses neural networks for function approximation. It enables us to handle the large, high-dimensional state space and compare performance against tabular baselines.
+
+
+#Reference:
+Watkins, C. J. C. H., & Dayan, P. (1992). Q-learning. Machine Learning, 8(3–4), 279–292. https://doi.org/10.1007/bf00992698
+This paper introduced the Q-learning algorithm, which serves as one of our baseline methods. In our project, we apply Q-learning to a more complex and stochastic environment with energy management, obstacles, and probabilistic rewards, allowing us to evaluate its limitations and effectiveness.
+
+Ng, A. Y., Harada, D., & Russell, S. (1999). Policy invariance under reward transformations: 
+Theory and application to reward shaping. In Proceedings of the 16th International Conference on Machine Learning (pp. 278–287). Morgan Kaufmann. https://people.eecs.berkeley.edu/~pabbeel/cs287-fa09/readings/NgHaradaRussell-shaping-ICML1999.pdf
+This work provides the theoretical foundation for potential-based reward shaping, ensuring that reward modifications do not alter the optimal policy. We build on this by designing rewards that incorporate energy consumption, self-bite penalties, and stochastic mystery food outcomes.
+
+Wei, Z., Wang, D., Zhang, M., Tan, A., & Miao, C. (2018). Autonomous agents in snake game 
+via deep reinforcement learning. Singapore Management University.
+https://ink.library.smu.edu.sg/cgi/viewcontent.cgi?article=7076&context=sis_research
+This study applied DQN to the classic Snake game. Our project extends this direction by introducing energy constraints, multiple food types, and obstacles, transforming the game into a more challenging and research-oriented benchmark.
+
+Rummery, G. A., & Niranjan, M. (1994, November 4). On-Line Q-Learning Using Connectionist 
+Systems. https://www.researchgate.net/publication/2500611_On-Line_Q-Learning_Using_Connectionist_Systems ‌
+This paper introduced SARSA, which we use as another baseline algorithm. By comparing SARSA with Q-learning, we analyze how on-policy versus off-policy learning performs under stochastic transitions such as teleportation and random food effects.
+
+Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A. A., Veness, J., Bellemare, M. G., Graves, A., 
+Riedmiller, M., Fidjeland, A. K., Ostrovski, G., Petersen, S., Beattie, C., Sadik, A., Antonoglou, I., King, H., Kumaran, D., Wierstra, D., Legg, S., & Hassabis, D. (2015). Human-level Control through Deep Reinforcement Learning. Nature, 518(7540), 529–533. https://doi.org/10.1038/nature14236 ‌
+This influential paper proposed the Deep Q-Network, enabling RL to handle high-dimensional state spaces. We adopt DQN as our advanced algorithm to evaluate how deep RL scales in our resource-constrained, stochastic Snake environment compared to tabular methods.
+
+#Incremental development plan:
+Oct 15 – Oct 29: 
+Finalize environment core mechanics: implement multiple food types (normal, energy, score, mystery). 
+Add basic reward shaping rules (energy decay, step cost, food rewards, penalties for self-bite and obstacles). 
+Ensure environment runs stably with a random policy for testing.
+Implement Q-learning as the first baseline and collect preliminary learning curves.
+Oct 30 – Nov 14:
+Implement SARSA for comparison with Q-learning, focusing on stochastic transitions from mystery food and teleportation. 
+Integrate static obstacles into the environment. 
+Conduct initial experiments comparing Q-learning vs SARSA under different reward structures. 
+Document early results for analysis.
+Nov 15 – Nov 30: 
+Implement Deep Q-Network (DQN) with function approximation for handling larger state spaces. 
+Add advanced environment features such as dynamic obstacles and food expiration. 
+Run systematic experiments comparing all three algorithms (Q-learning, SARSA, DQN). 
+Analyze results in terms of convergence speed, survival time, and score performance.
+Dec 1 – Dec 7:
+Conduct ablation studies on reward shaping (with vs without energy penalties, with vs without mystery food). 
+Finalize experiments and generate plots (learning curves, performance metrics). 
+Write the final project report
+
+Note: This incremental development plan outlines our current roadmap, but the timeline and tasks may be adjusted as implementation progresses and new challenges or insights arise.
