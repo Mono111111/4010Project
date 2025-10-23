@@ -1,0 +1,17 @@
+# VS
+.vs/
+*.db
+*.db-shm
+*.db-wal
+*.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual
+.venv/
+env/
+venv/
