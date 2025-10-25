@@ -18,6 +18,17 @@ SCORE_GAIN_NORMAL = 5     # score gained from normal food
 FOOD_INIT_COUNT = 5
 MYSTERY_PROB = 0.2  # probability of spawning mystery food
 
+# Obstacle settings
+OBSTACLE_COUNT = 5
+OBSTACLE_PENALTY_ENERGY = 10
+COLOR_OBSTACLE = (120, 120, 120)
+
+# Dynamic Obstacle settings
+DYN_OBS_COUNT = 2
+DYN_OBS_PENALTY_SCORE = 5
+DYN_OBS_SPEED_STEPS = 1     # 每步移动一个格
+COLOR_DYN_OBS = (0, 160, 255)
+
 # Colors (RGB format)
 COLOR_BACKGROUND = (0, 0, 0)       # black
 COLOR_SNAKE = (0, 255, 0)          # green

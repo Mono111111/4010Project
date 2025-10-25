@@ -28,17 +28,14 @@ class SnakeGame:
         self.snake = [[config.WINDOW_WIDTH // 2, config.WINDOW_HEIGHT // 2]]
         self.direction = [0, -config.GRID_SIZE]  # start moving up
 
-        # Place first food
-        self.spawn_food()
-
-        # Score and energy
-        self.score = 0
-        self.energy = config.INITIAL_ENERGY
-
         # List to hold multiple foods
         self.foods = []
         self.spawn_initial_foods(config.FOOD_INIT_COUNT)
 
+        self.obstacles = []
+        self._spawn_obstacles(config.OBSTACLE_COUNT)
+        
+        # Score and energy
         self.score = 0
         self.energy = config.INITIAL_ENERGY
 
@@ -46,18 +43,8 @@ class SnakeGame:
         self.start_time = pygame.time.get_ticks()  # ms since pygame.init()
         self.survival_ms = None                    # filled at game over
 
-    def spawn_food(self):
-        while True:
-            x = random.randrange(0, config.WINDOW_WIDTH, config.GRID_SIZE)
-            y = random.randrange(0, config.WINDOW_HEIGHT, config.GRID_SIZE)
-            if [x, y] not in self.snake:  # do not spawn on the snake
-                break
-
-        # 20% mystery, 80% normal
-        if random.random() < 0.2:
-            self.food = [x, y, "mystery"]
-        else:
-            self.food = [x, y, "normal"]
+        # Dynamic obstacles
+        self._spawn_dynamic_obstacles(config.DYN_OBS_COUNT)
 
     def _random_food_cell(self):
         while True:
@@ -75,8 +62,51 @@ class SnakeGame:
     def spawn_initial_foods(self, n):
         self.foods = [self.spawn_one_food() for _ in range(n)]
 
+    def _random_empty_cell(self):
+        # returns a random cell not occupied by snake, food, or obstacles
+        while True:
+            x = random.randrange(0, config.WINDOW_WIDTH, config.GRID_SIZE)
+            y = random.randrange(0, config.WINDOW_HEIGHT, config.GRID_SIZE)
+            occ_food = any(f[0] == x and f[1] == y for f in getattr(self, 'foods', []))
+            occ_obst = any(o[0] == x and o[1] == y for o in getattr(self, 'obstacles', []))
+            if [x, y] not in self.snake and not occ_food and not occ_obst:
+                return x, y
+
+    def _spawn_obstacles(self, n):
+        self.obstacles = []
+        for _ in range(n):
+            x, y = self._random_empty_cell()
+            self.obstacles.append([x, y])
+
+    def _spawn_dynamic_obstacles(self, n):
+        self.dynamic_obstacles = []
+        for _ in range(n):
+            x, y = self._random_empty_cell()
+            # ramdom initial velocity
+            if random.random() < 0.5:
+                vel = [config.GRID_SIZE, 0]
+            else:
+                vel = [0, config.GRID_SIZE]
+            self.dynamic_obstacles.append([x, y, vel])
+
+    def _update_dynamic_obstacles(self):
+        updated = []
+        for x, y, vel in self.dynamic_obstacles:
+            nx = (x + vel[0]) % config.WINDOW_WIDTH
+            ny = (y + vel[1]) % config.WINDOW_HEIGHT
+            # simple collision check, reverse if collides
+            coll_snake = [nx, ny] in self.snake
+            coll_static = any(nx == ox and ny == oy for ox, oy in self.obstacles)
+            if coll_snake or coll_static:
+                vel = [-vel[0], -vel[1]]
+                nx = (x + vel[0]) % config.WINDOW_WIDTH
+                ny = (y + vel[1]) % config.WINDOW_HEIGHT
+            updated.append([nx, ny, vel])
+        self.dynamic_obstacles = updated
 
     def step(self):
+        self._update_dynamic_obstacles()
+
         # handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -118,9 +148,12 @@ class SnakeGame:
                     elif outcome < 0.50: # 0.30-0.50
                         nx = random.randrange(0, config.WINDOW_WIDTH, config.GRID_SIZE)
                         ny = random.randrange(0, config.WINDOW_HEIGHT, config.GRID_SIZE)
-                        self.snake[0] = [nx, ny]; print("[EVENT] Mystery -> Teleport!")
+                        self.snake[0] = [nx, ny]
+                        head = self.snake[0]
+                        print("[EVENT] Mystery -> Teleport!")
                     else: # 0.50-1.00
-                        self.score -= 5; print("[EVENT] Mystery -> Penalty! -5 score")
+                        self.score -= 5 
+                        print("[EVENT] Mystery -> Penalty! -5 score")
                 break
 
         # if ate, spawn new food, else pop tail
@@ -128,6 +161,19 @@ class SnakeGame:
             self.foods[ate_idx] = self.spawn_one_food()
         else:
             self.snake.pop()
+
+        # dynamic obstacle check
+        if any(head[0] == dx and head[1] == dy for dx, dy, _ in self.dynamic_obstacles):
+            self.score -= config.DYN_OBS_PENALTY_SCORE
+            print(f"[EVENT] Hit dynamic obstacle: -{config.DYN_OBS_PENALTY_SCORE} score")
+
+        # obstacle check
+        if any(head[0] == ox and head[1] == oy for ox, oy in self.obstacles):
+            self.energy -= config.OBSTACLE_PENALTY_ENERGY
+            print(f"[EVENT] Hit obstacle: -{config.OBSTACLE_PENALTY_ENERGY} energy")
+            if self.energy <= 0:
+                self.energy = 0
+                self._end_game()
 
         # self-bite check
         if head in self.snake[1:]:
@@ -158,6 +204,21 @@ class SnakeGame:
         for fx, fy, ft in self.foods:
             color = config.COLOR_FOOD if ft == "normal" else (255, 255, 0)
             pygame.draw.rect(self.screen, color, pygame.Rect(fx, fy, config.GRID_SIZE, config.GRID_SIZE))
+
+        # draw obstacles
+        for ox, oy in self.obstacles:
+            pygame.draw.rect(
+                self.screen, config.COLOR_OBSTACLE,
+                pygame.Rect(ox, oy, config.GRID_SIZE, config.GRID_SIZE)
+            )
+
+        # draw dynamic obstacles
+        for dx, dy, _ in self.dynamic_obstacles:
+            pygame.draw.rect(
+                self.screen, config.COLOR_DYN_OBS,
+                pygame.Rect(dx, dy, config.GRID_SIZE, config.GRID_SIZE)
+            )
+
 
         # HUD
         font = pygame.font.SysFont(None, 30)
