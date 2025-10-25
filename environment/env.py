@@ -46,6 +46,15 @@ class SnakeGame:
         # Dynamic obstacles
         self._spawn_dynamic_obstacles(config.DYN_OBS_COUNT)
 
+    def get_observation(self):
+        # Return a simple, low-dim observation for RL
+        hx, hy = self.snake[0]
+        # choose nearest food (Manhattan distance))
+        fx, fy, _ = min(self.foods, key=lambda f: abs(f[0]-hx)+abs(f[1]-hy))
+        dx, dy = fx - hx, fy - hy
+        # simple observation: head pos, energy, score, food delta
+        return (hx, hy, self.energy, self.score, dx, dy)
+
     def _random_food_cell(self):
         while True:
             x = random.randrange(0, config.WINDOW_WIDTH, config.GRID_SIZE)
@@ -105,6 +114,9 @@ class SnakeGame:
         self.dynamic_obstacles = updated
 
     def step(self):
+        old_score = self.score
+
+        # update dynamic obstacles
         self._update_dynamic_obstacles()
 
         # handle events
@@ -191,6 +203,8 @@ class SnakeGame:
         if self.score >= 100:
             self._end_game()
 
+        self.last_reward = self.score - old_score  # temporary reward
+
 
     def render(self):
         self.screen.fill(config.COLOR_BACKGROUND)
@@ -265,7 +279,7 @@ class SnakeGame:
     def _end_game(self):
         if not self.game_over:
             self.game_over = True
-            self.survival_ms = pygame.time.get_ticks() - self.start_time  # ms
+            self.survival_ms = pygame.time.get_ticks() - self.start_time
 
     def _show_game_over(self, ms=2000):
         # show game over screen for ms milliseconds
