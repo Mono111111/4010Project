@@ -37,3 +37,6 @@ COLOR_TEXT = (255, 255, 255)       # white
 
 # Game speed (frames per second)
 FPS = 10
+
+# UI timer
+MESSAGE_DURATION_MS = 800

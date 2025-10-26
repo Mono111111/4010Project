@@ -46,6 +46,11 @@ class SnakeGame:
         # Dynamic obstacles
         self._spawn_dynamic_obstacles(config.DYN_OBS_COUNT)
 
+        # message
+        self.message_msg = ""
+        self.message_start_ms = 0
+
+
     def get_observation(self):
         # Return a simple, low-dim observation for RL
         hx, hy = self.snake[0]
@@ -113,6 +118,12 @@ class SnakeGame:
             updated.append([nx, ny, vel])
         self.dynamic_obstacles = updated
 
+    def message(self, msg, ms=None):
+        if ms is None:
+            ms = getattr(config, "MESSAGE_DURATION_MS", 800)
+        self.message_msg = msg
+        self.message_start_ms = pygame.time.get_ticks() + ms
+
     def step(self):
         old_score = self.score
 
@@ -149,23 +160,29 @@ class SnakeGame:
                     self.score += config.SCORE_GAIN_NORMAL
                     self.energy = min(config.INITIAL_ENERGY, self.energy + config.ENERGY_GAIN_NORMAL)
                     print(f"[EVENT] Ate normal food: +{config.SCORE_GAIN_NORMAL} score, +{config.ENERGY_GAIN_NORMAL} energy")
+                    self.message(f"Ate food +{config.SCORE_GAIN_NORMAL} score, +{config.ENERGY_GAIN_NORMAL} energy")
                 else:  # mystery
                     outcome = random.random()
                     if outcome < 0.05:
                         self.score += 50; print("[EVENT] Mystery -> Jackpot! +50 score")
+                        self.message("Mystery -> Jackpot! +50 score")
                     elif outcome < 0.20: # 0.05-0.20
                         self.score += 10; print("[EVENT] Mystery -> Bonus! +10 score")
+                        self.message("Mystery -> Bonus! +10 score")
                     elif outcome < 0.30: # 0.20-0.30
                         self.score -= 10; print("[EVENT] Mystery -> Ouch! -10 score")
+                        self.message("Mystery -> Ouch! -10 score")
                     elif outcome < 0.50: # 0.30-0.50
                         nx = random.randrange(0, config.WINDOW_WIDTH, config.GRID_SIZE)
                         ny = random.randrange(0, config.WINDOW_HEIGHT, config.GRID_SIZE)
                         self.snake[0] = [nx, ny]
                         head = self.snake[0]
                         print("[EVENT] Mystery -> Teleport!")
+                        self.message("Mystery -> Teleport!")
                     else: # 0.50-1.00
                         self.score -= 5 
                         print("[EVENT] Mystery -> Penalty! -5 score")
+                        self.message("Mystery -> Penalty! -5 score")
                 break
 
         # if ate, spawn new food, else pop tail
@@ -178,11 +195,13 @@ class SnakeGame:
         if any(head[0] == dx and head[1] == dy for dx, dy, _ in self.dynamic_obstacles):
             self.score -= config.DYN_OBS_PENALTY_SCORE
             print(f"[EVENT] Hit dynamic obstacle: -{config.DYN_OBS_PENALTY_SCORE} score")
+            self.message(f"Hit dynamic obstacle: -{config.DYN_OBS_PENALTY_SCORE} score")
 
         # obstacle check
         if any(head[0] == ox and head[1] == oy for ox, oy in self.obstacles):
             self.energy -= config.OBSTACLE_PENALTY_ENERGY
             print(f"[EVENT] Hit obstacle: -{config.OBSTACLE_PENALTY_ENERGY} energy")
+            self.message(f"Hit obstacle: -{config.OBSTACLE_PENALTY_ENERGY} energy")
             if self.energy <= 0:
                 self.energy = 0
                 self._end_game()
@@ -191,6 +210,7 @@ class SnakeGame:
         if head in self.snake[1:]:
             self.energy -= 10
             print("[EVENT] Self-bite: -10 energy")
+            self.message("Self-bite: -10 energy")
             if self.energy <= 0:
                 self.energy = 0 
                 self._end_game()
@@ -247,6 +267,15 @@ class SnakeGame:
             True, config.COLOR_TEXT
         )
         self.screen.blit(hud, (10, 10))
+
+        # message
+        now = pygame.time.get_ticks()
+        if now < getattr(self, "message_start_ms", 0) and getattr(self, "message_msg", ""):
+            smallfont = pygame.font.SysFont(None, 18)
+            msg_surf = smallfont.render(self.message_msg, True, config.COLOR_TEXT)
+            msg_rect = msg_surf.get_rect()
+            msg_rect.bottomleft = (10, config.WINDOW_HEIGHT - 10)
+            self.screen.blit(msg_surf, msg_rect)
 
         # Game Over
         if self.game_over:
