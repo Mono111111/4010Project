@@ -1,0 +1,26 @@
+Project Progress Update - Oct 30, 2025 
+
+#Project Title:
+SurviveSnake Agent
+
+#Group Members:
+Wenjing Huang (101261410)
+Siqi Huang (101284265)
+Zhimei Li (101258414)
+
+#What we have done for the past two weeks:
+In the past two weeks, we worked together in person to complete the RL environment demo mainly.
+Wenjing worked on designing and implementing the state representation and energy system, and implementing the initial version of the reward structure. In addition, improved the message display system.
+Siqi implemented the main environment loop as well as the step() and reset() functions, ensuring the environment runs properly during interactions.
+Zhimei implemented a random agent used for testing and validation, completed the reward structure and other unfinished functions.
+After finishing the core components, we tested and debugged the environment together, and uploaded code and progress to GitHub with consistent commits. Furthermore, we jointly wrote the script for the demo video and completed the video showing the environment.
+
+#Plans for the next two weeks:
+Implement Q-learning and begin running experiments to collect baseline performance results.
+Design initial experiments and collect performance data.
+Continue refining reward shaping to improve agent learning behavior.
+
+
+
+
+
