@@ -11,9 +11,40 @@ def argmax_Q(Q, state):
 	optimal_actions = [a for a in range(4) if q_values[a] == max_q]
 	return np.random.choice(optimal_actions)
 
+def sign3(x):
+	if x > 0:
+		return 1
+	elif x < 0:
+		return -1
+	else:
+		return 0
+
+# 将连续state离散化
+def discretize_state(obs):
+	hx, hy, energy, score, dx, dy = map(float, obs)
+	x_cell = int(hx // 20)
+	y_cell = int(hy // 20)
+	sdx = sign3(dx)
+	sdy = sign3(dy)
+	energy_bin = int(energy // 10)
+	return (x_cell, y_cell, sdx, sdy, energy_bin)
+
 # Q(s,a) ← Q(s,a) + α[R + γQ(s',a') - Q(s,a)]
 class SARSA_Agent:
 	# Initialize
+	# 果然还是需要一个init看的清楚一点
+	def __init__(self, env, alpha = 0.15, gamma=0.9, step_size=0.1, epsilon=1.0, max_episode=1000, epsilon_decay=0.995, epsilon_min=0.01):
+		self.env = env
+		self.alpha = alpha
+		self.gamma = gamma
+		self.step_size = step_size
+		self.epsilon = epsilon
+		self.max_episode = max_episode
+		self.epsilon_decay = epsilon_decay
+		self.epsilon_min = epsilon_min
+		self.Q = defaultdict(float)
+		# 4
+		self.n_actions = env.action_space.n
 	# actions: number of possible actions
 	# alpha: learning rate
 	# gamma: discount factor
@@ -22,8 +53,6 @@ class SARSA_Agent:
 	# epsilon_decay: decay rate of exploration rate per episode 探索衰减率
 	# epsilon_min: minimum exploration rate
 	def SARSA(env, gamma, step_size, epsilon, max_episode, epsilon_decay = 0.995, epsilon_min=0.01):
-		#init
-		Q = defaultdict(float)
 		#training history
 		episode_scores = []
 		episode_steps = []
