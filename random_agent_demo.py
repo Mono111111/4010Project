@@ -16,8 +16,7 @@ if __name__ == "__main__":
     for ep in range(1, episodes + 1):
         obs, info = env.reset(seed=ep)  # seed with episode id for reproducibility in the demo
         print(f"\n=== Episode {ep} started ===")
-        print(f"Initial info: score={info['score']}, energy={info['energy']}, "
-              f"mystery_foods={info.get('mystery_foods', 0)}")
+        print(f"Initial info: score={info['score']}, energy={info['energy']}")
 
         done = False
         steps_in_ep = 0

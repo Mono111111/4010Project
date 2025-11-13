@@ -26,7 +26,7 @@ COLOR_OBSTACLE = (120, 120, 120)
 # Dynamic Obstacle settings
 DYN_OBS_COUNT = 2
 DYN_OBS_PENALTY_SCORE = 5
-DYN_OBS_SPEED_STEPS = 1     # 每步移动一个格
+DYN_OBS_SPEED_STEPS = 1
 COLOR_DYN_OBS = (0, 160, 255)
 
 # Colors (RGB format)
