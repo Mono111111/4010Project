@@ -5,10 +5,10 @@ from collections import defaultdict
 
 # Return the action with the highest Q value for a given state
 # if has many max_q, choose one randomly
-def argmax_Q(Q, state):
+def argmax_Q(Q, state, n_actions):
 	q_values = [Q[(state, a)] for a in range(4)]
 	max_q = max(q_values)
-	optimal_actions = [a for a in range(4) if q_values[a] == max_q]
+	optimal_actions = [a for a in range(n_actions) if q_values[a] == max_q]
 	return np.random.choice(optimal_actions)
 
 def sign3(x):
@@ -19,29 +19,37 @@ def sign3(x):
 	else:
 		return 0
 
-# 将连续state离散化
+# 将连续state离散化成元组
 def discretize_state(obs):
 	hx, hy, energy, score, dx, dy = map(float, obs)
+	# position cell size 20
+	# calcaluate the x and y cell of head
 	x_cell = int(hx // 20)
 	y_cell = int(hy // 20)
+	# left -1, no change 0, right 1
 	sdx = sign3(dx)
 	sdy = sign3(dy)
+	# energy bin size 10
 	energy_bin = int(energy // 10)
+	# return as a tuple
 	return (x_cell, y_cell, sdx, sdy, energy_bin)
 
 # Q(s,a) ← Q(s,a) + α[R + γQ(s',a') - Q(s,a)]
 class SARSA_Agent:
 	# Initialize
 	# 果然还是需要一个init看的清楚一点
-	def __init__(self, env, alpha = 0.15, gamma=0.9, step_size=0.1, epsilon=1.0, max_episode=1000, epsilon_decay=0.995, epsilon_min=0.01):
+	def __init__(self, env, alpha = 0.15, gamma=0.9, epsilon=1.0, max_episode=1000, epsilon_decay=0.995, epsilon_min=0.01, max_steps = 2000):
 		self.env = env
 		self.alpha = alpha
 		self.gamma = gamma
-		self.step_size = step_size
 		self.epsilon = epsilon
 		self.max_episode = max_episode
 		self.epsilon_decay = epsilon_decay
 		self.epsilon_min = epsilon_min
+		self.max_steps = max_steps
+		# get the action space in env action space
+		self.n_actions = env.action_space.n
+		# Q table
 		self.Q = defaultdict(float)
 		# 4
 		self.n_actions = env.action_space.n
@@ -52,48 +60,64 @@ class SARSA_Agent:
 	# max_episode: number of episodes to train
 	# epsilon_decay: decay rate of exploration rate per episode 探索衰减率
 	# epsilon_min: minimum exploration rate
+
+	# ε-greedy
+	def _epsilon_greedy(self, state):
+		# choose action randomly
+		if np.random.random() < self.epsilon:
+			return np.random.randint(self.n_actions)
+		# choose action with highest Q value
+		else:
+			return argmax_Q(self.Q, state, self.n_actions)
+
 	def SARSA(env, gamma, step_size, epsilon, max_episode, epsilon_decay = 0.995, epsilon_min=0.01):
 		#training history
-		episode_scores = []
+		#episode_scores = []
 		episode_steps = []
 		episode_rewards = []
 
-		for episode in range(max_episode):
+		for ep in range(self.max_episode):
 			#init
-			state = env.reset()
+			# recheck the env
+			# reset() return two values obs and info
+			obs, info = env.reset()
+			# some copy from assignemnt
 			terminated = False
 			truncated = False
+			state = discretize_state(obs)
+			action = self._epsilon_greedy(state)
 			step = 0
-			max_steps = 2000
-			episode_reward = 0
-
-			#choose action using epsilon-greedy policy
-			if np.random.random()< epsilon:
-				action = np.random.randint(4)
-			else:
-				action = argmax_Q(Q, state)
+			total_reward = 0.0
 			
-			while not (terminated or truncated) and step < max_steps:
-				next_state, reward, terminated, truncated, info = env.step(action)
-				next_state = tuple(next_state)
+			while not (terminated or truncated) and step < self.max_steps:
+				next_obs, reward, terminated, truncated, info = env.step(action)
+				next_state = discretize_state(next_obs)
 
 				if terminated or truncated:
-					Q[(state, action)] += step_size * (reward - Q[(state, action)])
+					td_target = reward
+					td_error = td_target - self.Q[(state, action)]
+					self.Q[(state, action)] += self.alpha * td_error
 					break
 				else:
-					if np.random.random() < epsilon:
-						next_action = np.random.randint(4)
-					else:
-						next_action = argmax_Q(Q, next_state)
-					
-					target = reward + gamma * Q[(next_state, next_action)]
-					Q[(state, action)] += step_size * (target - Q[(state, action)])
+					next_action = self._epsilon_greedy(next_state)
+					# R + γ* Q(s', a')
+					td_target = reward + self.gamma * self.Q[(next_state, next_action)]
+					td_error = td_target - self.Q[(state, action)]
+					# update Q
+					self.Q[(state, action)] += self.alpha * td_error
+					# move to next state and action
 					state = next_state
 					action = next_action
-					step += 1
-		policy = np.zeros((env.observation_space.n, ), dtype=int)
-		for s in range(env.observation_space.n):
-			policy[s] = argmax_Q(Q, s)
-		Pi = diagonalization(policy, state, action)
-		q_values = Q.reshape(-1)
-		return Pi,q_values
+			self.episode = max(self.epsilon * self.epsilon_decay, self.epsilon_min))
+			#episode_scores.append(info['score'])
+			# add history
+			episode_steps.append(step)
+			episode_rewards.append(total_reward)
+
+			# print to obeserve
+			# 10 episodes print once
+			if(ep+1) % 10 == 0:
+				print(f"Episode {ep+1}/{self.max_episode}, Steps: {step}, Total Reward: {total_reward:.1f}")
+
+			history = {"episode_rewards": episode_rewards, "episode_steps": episode_steps, "Q" : self.Q}
+		return history
