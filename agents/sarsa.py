@@ -6,7 +6,7 @@ from collections import defaultdict
 # Return the action with the highest Q value for a given state
 # if has many max_q, choose one randomly
 def argmax_Q(Q, state, n_actions):
-	q_values = [Q[(state, a)] for a in range(4)]
+	q_values = [Q[(state, a)] for a in range(n_actions)]
 	max_q = max(q_values)
 	optimal_actions = [a for a in range(n_actions) if q_values[a] == max_q]
 	return np.random.choice(optimal_actions)
@@ -70,7 +70,7 @@ class SARSA_Agent:
 		else:
 			return argmax_Q(self.Q, state, self.n_actions)
 
-	def SARSA(env, gamma, step_size, epsilon, max_episode, epsilon_decay = 0.995, epsilon_min=0.01):
+	def SARSA(self):
 		#training history
 		#episode_scores = []
 		episode_steps = []
@@ -90,8 +90,10 @@ class SARSA_Agent:
 			total_reward = 0.0
 			
 			while not (terminated or truncated) and step < self.max_steps:
+				atep += 1
 				next_obs, reward, terminated, truncated, info = env.step(action)
 				next_state = discretize_state(next_obs)
+				total_reward += reward
 
 				if terminated or truncated:
 					td_target = reward
@@ -108,7 +110,7 @@ class SARSA_Agent:
 					# move to next state and action
 					state = next_state
 					action = next_action
-			self.episode = max(self.epsilon * self.epsilon_decay, self.epsilon_min))
+			self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_min)
 			#episode_scores.append(info['score'])
 			# add history
 			episode_steps.append(step)
@@ -119,5 +121,5 @@ class SARSA_Agent:
 			if(ep+1) % 10 == 0:
 				print(f"Episode {ep+1}/{self.max_episode}, Steps: {step}, Total Reward: {total_reward:.1f}")
 
-			history = {"episode_rewards": episode_rewards, "episode_steps": episode_steps, "Q" : self.Q}
+		history = {"episode_rewards": episode_rewards, "episode_steps": episode_steps, "Q" : self.Q}
 		return history
