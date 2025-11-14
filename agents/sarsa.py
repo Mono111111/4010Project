@@ -51,8 +51,6 @@ class SARSA_Agent:
 		self.n_actions = env.action_space.n
 		# Q table
 		self.Q = defaultdict(float)
-		# 4
-		self.n_actions = env.action_space.n
 	# actions: number of possible actions
 	# alpha: learning rate
 	# gamma: discount factor
@@ -80,7 +78,7 @@ class SARSA_Agent:
 			#init
 			# recheck the env
 			# reset() return two values obs and info
-			obs, info = env.reset()
+			obs, info = self.env.reset()
 			# some copy from assignemnt
 			terminated = False
 			truncated = False
@@ -90,8 +88,8 @@ class SARSA_Agent:
 			total_reward = 0.0
 			
 			while not (terminated or truncated) and step < self.max_steps:
-				atep += 1
-				next_obs, reward, terminated, truncated, info = env.step(action)
+				step += 1
+				next_obs, reward, terminated, truncated, info = self.env.step(action)
 				next_state = discretize_state(next_obs)
 				total_reward += reward
 
