@@ -1,7 +1,6 @@
-ï»¿from environment.gym_env import SnakeGymEnv
+from environment.gym_env import SnakeGymEnv
 from agents.sarsa import SARSA_Agent
 from agents.agent import Greedy_Agent
-from agents.q_learning import QLearningAgent
 import numpy as np
 
 # Train SARSA agent
@@ -14,8 +13,8 @@ if __name__ == "__main__":
 	#env = SnakeGymEnv(render_mode="human", max_steps=2000)
 	env = SnakeGymEnv(render_mode=None, max_steps=2000)
 
-	# ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸Ä¿ï¿½ï¿½Ô»ï¿½ï¿½ï¿½ï¿½agentï¿½ï¿½ï¿½ï¿½
-	agent = QLearningAgent(env, max_episode = 500)
+	# ÕâÀïÐÞ¸Ä¿ÉÒÔ»»±ðµÄagent²âÊÔ
+	agent = SARSA_Agent(env, max_episode = 500)
 	history = agent.SARSA()
 	# Save the trained Q-table
 	agent.save("sarsa_q_table.pkl")

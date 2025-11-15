@@ -1,4 +1,4 @@
-ï»¿import numpy as np
+import numpy as np
 import pickle
 from collections import defaultdict
 
@@ -20,7 +20,7 @@ def sign3(x):
 	else:
 		return 0
 
-# ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½stateï¿½ï¿½É¢ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½
+# ½«Á¬ÐøstateÀëÉ¢»¯³ÉÔª×é
 def discretize_state(obs):
 	hx, hy, energy, score, dx, dy = map(float, obs)
 	# position cell size 20
