@@ -121,3 +121,12 @@ class SARSA_Agent:
 
 		history = {"episode_rewards": episode_rewards, "episode_steps": episode_steps, "Q" : self.Q}
 		return history
+
+	def save(self, path):
+		with open(path, 'wb') as f:
+			pickle.dump(dict(self.Q), f)
+
+	def load(self, path):
+		with open(path, 'rb') as f:
+			data = pickle.load(f)
+		self.Q = defaultdict(float, data)
