@@ -1,0 +1,24 @@
+[33m71edb9a[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Updated Q-Leaning and the corresponding Q-Learning training and testing, as well as updated compare.py for comparing different algorithms
+[33m971c8b4[m Initial DQN implementation
+[33mb2c1138[m Added some comments to facilitate testing by other team members.
+[33m403d32b[m Complete a agent use greedy policy which can be used for evaluation. Complete the agent test.
+[33m270ee3e[m Complete the sarsa algorithm, add a train_agent.py.
+[33mf609e78[m Fix some error in SARSA.
+[33m70550ff[m Update sarsa algorithm.
+[33m9138ec4[m Update the saras.py, move the code to new .py file.
+[33m8ce2534[m Merge pull request #1 from Mono111111/SARSA
+[33m3a312e0[m Refactor environment: split env.py into core.py (game logic) and renderer.py (rendering)
+[33m80a4277[m[33m ([m[1;31morigin/SARSA[m[33m)[m Update the SARSA_Agent, update the _init_.
+[33m854129f[m Update the SARSA algorithm.
+[33m407ddf0[m Add a SARSA_Agent class, implement the init.
+[33me319c27[m Remove redundant whitespace and format progress report
+[33m63956cf[m Add files via upload
+[33mf448b58[m Added screen message prompts.
+[33m1a5d471[m Gym environment demo
+[33m6c0a3e0[m Added the settings for static and dynamic obstacles
+[33m3cd680a[m Basic manual version (without obstacles)
+[33m001ee41[m init project structure
+[33me70efa0[m Revise project progress report for Oct 15, 2025
+[33m1b28075[m Add 10.15 progress report.
+[33mffa884d[m Update README.md
+[33m49dab0d[m Initial commit

@@ -11,7 +11,22 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Virtual
-.venv/
+# Ignore Python virtual environment
 env/
-venv/
+env1/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore torch and model binaries
+*.pt
+*.pth
+*.dll
+*.so
+*.dylib
+*.zip
+
+# Ignore notebooks autosaves, cache
+.ipynb_checkpoints/
