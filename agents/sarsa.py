@@ -1,4 +1,4 @@
-import numpy as np
+ï»¿import numpy as np
 import math
 import pickle
 from collections import defaultdict
@@ -19,7 +19,7 @@ def sign3(x):
 	else:
 		return 0
 
-# ½«Á¬ÐøstateÀëÉ¢»¯³ÉÔª×é
+# ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½stateï¿½ï¿½É¢ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½
 def discretize_state(obs):
 	hx, hy, energy, score, dx, dy = map(float, obs)
 	# position cell size 20
@@ -34,10 +34,10 @@ def discretize_state(obs):
 	# return as a tuple
 	return (x_cell, y_cell, sdx, sdy, energy_bin)
 
-# Q(s,a) ¡û Q(s,a) + ¦Á[R + ¦ÃQ(s',a') - Q(s,a)]
+# Q(s,a) ï¿½ï¿½ Q(s,a) + ï¿½ï¿½[R + ï¿½ï¿½Q(s',a') - Q(s,a)]
 class SARSA_Agent:
 	# Initialize
-	# ¹ûÈ»»¹ÊÇÐèÒªÒ»¸öinit¿´µÄÇå³þÒ»µã
+	# ï¿½ï¿½È»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÒªÒ»ï¿½ï¿½initï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½
 	def __init__(self, env, alpha = 0.15, gamma=0.9, epsilon=1.0, max_episode=1000, epsilon_decay=0.995, epsilon_min=0.01, max_steps = 2000):
 		self.env = env
 		self.alpha = alpha
@@ -56,10 +56,10 @@ class SARSA_Agent:
 	# gamma: discount factor
 	# epsilon: exploration rate at begining
 	# max_episode: number of episodes to train
-	# epsilon_decay: decay rate of exploration rate per episode Ì½Ë÷Ë¥¼õÂÊ
+	# epsilon_decay: decay rate of exploration rate per episode Ì½ï¿½ï¿½Ë¥ï¿½ï¿½ï¿½ï¿½
 	# epsilon_min: minimum exploration rate
 
-	# ¦Å-greedy
+	# ï¿½ï¿½-greedy
 	def _epsilon_greedy(self, state):
 		# choose action randomly
 		if np.random.random() < self.epsilon:
@@ -100,7 +100,7 @@ class SARSA_Agent:
 					break
 				else:
 					next_action = self._epsilon_greedy(next_state)
-					# R + ¦Ã* Q(s', a')
+					# R + ï¿½ï¿½* Q(s', a')
 					td_target = reward + self.gamma * self.Q[(next_state, next_action)]
 					td_error = td_target - self.Q[(state, action)]
 					# update Q
