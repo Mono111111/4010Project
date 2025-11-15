@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from environment.gym_env import SnakeGymEnv
 from agents.q_learning import QLearningAgent
-from agents.sarsa import SARSA_Agent
+from agents.sarsa import SARSA_Agent, get_state, argmax_Q
 from agents.agent import Greedy_Agent
 import time
 
@@ -25,7 +25,7 @@ class AlgorithmComparison:
         self.results = {}
         
         print("\n" + "="*60)
-        print("⚙️  UNIFIED HYPERPARAMETERS (Fair Comparison)")
+        print("  UNIFIED HYPERPARAMETERS (Fair Comparison)")
         print("="*60)
         print(f"Learning Rate (α):       {self.alpha}")
         print(f"Discount Factor (γ):     {self.gamma}")
@@ -39,7 +39,7 @@ class AlgorithmComparison:
     def train_qlearning(self):
         """Train Q-Learning agent"""
         print("\n" + "="*60)
-        print("🔵 Training Q-Learning Agent...")
+        print(" Training Q-Learning Agent...")
         print("="*60)
         
         env = SnakeGymEnv(render_mode=None, max_steps=self.max_steps)
@@ -66,15 +66,15 @@ class AlgorithmComparison:
             'q_table_size': len(agent.q_table)
         }
         
-        print(f"✅ Q-Learning training completed in {training_time:.2f}s")
-        print(f"📊 Q-table size: {len(agent.q_table)} states")
+        print(f" Q-Learning training completed in {training_time:.2f}s")
+        print(f" Q-table size: {len(agent.q_table)} states")
         
         return agent
     
     def train_sarsa(self):
         """Train SARSA agent"""
         print("\n" + "="*60)
-        print("🟢 Training SARSA Agent...")
+        print(" Training SARSA Agent...")
         print("="*60)
         
         env = SnakeGymEnv(render_mode=None, max_steps=self.max_steps)
@@ -83,34 +83,32 @@ class AlgorithmComparison:
             alpha=self.alpha,           # Use unified hyperparameters
             gamma=self.gamma,           # Use unified hyperparameters
             epsilon=self.epsilon,       # Use unified hyperparameters
+            episodes=self.episodes,
             epsilon_min=self.epsilon_min,  # Use unified hyperparameters
             epsilon_decay=self.epsilon_decay,  # Use unified hyperparameters
-            max_episode=self.episodes,
-            max_steps=self.max_steps
         )
         
         start_time = time.time()
-        history = agent.SARSA()
+        episode_rewards = agent.SARSA()
         training_time = time.time() - start_time
         
         # Save model
         agent.save("sarsa_q_table.pkl")
         
         self.results['SARSA'] = {
-            'rewards': history['episode_rewards'],
-            'steps': history['episode_steps'],
+            'rewards': episode_rewards,
             'training_time': training_time,
             'q_table_size': len(agent.Q)
         }
         
-        print(f"✅ SARSA training completed in {training_time:.2f}s")
-        print(f"📊 Q-table size: {len(agent.Q)} states")
+        print(f" SARSA training completed in {training_time:.2f}s")
+        print(f" Q-table size: {len(agent.Q)} states")
         
         return agent
     
     def evaluate_agent(self, agent_type, model_path):
         """Evaluate trained agent"""
-        print(f"\n🎮 Evaluating {agent_type}...")
+        print(f"\n Evaluating {agent_type}...")
         
         env = SnakeGymEnv(render_mode=None, max_steps=self.max_steps)
         
@@ -119,7 +117,9 @@ class AlgorithmComparison:
             agent.load(model_path)
             agent.epsilon = 0.0  # Greedy policy
         else:  # SARSA
-            agent = Greedy_Agent(env, model_path=model_path)
+            agent = SARSA_Agent(env)
+            agent.load(model_path)
+            agent.epsilon = 0.0
         
         eval_rewards = []
         eval_steps = []
@@ -139,7 +139,8 @@ class AlgorithmComparison:
                     q_values = agent.get_q_values(state)
                     action = int(np.argmax(q_values))
                 else:  # SARSA
-                    action = agent.select_action(obs)
+                    state = get_state(env)
+                    action = int(argmax_Q(agent.Q, state, agent.n_actions))
                 
                 obs, reward, terminated, truncated, info = env.step(action)
                 total_reward += reward
@@ -229,7 +230,7 @@ class AlgorithmComparison:
         ax4 = axes[1, 1]
         ax4.axis('off')
         
-        summary_text = "📊 Algorithm Comparison Summary\n\n"
+        summary_text = " Algorithm Comparison Summary\n\n"
         
         for name in ['Q-Learning', 'SARSA']:
             if name in self.results:
@@ -254,13 +255,13 @@ class AlgorithmComparison:
         
         plt.tight_layout()
         plt.savefig('algorithm_comparison.png', dpi=300)
-        print("\n📈 Comparison plot saved to 'algorithm_comparison.png'")
+        print("\n Comparison plot saved to 'algorithm_comparison.png'")
         plt.show()
     
     def print_detailed_comparison(self):
         """Print detailed comparison table"""
         print("\n" + "="*80)
-        print("📊 DETAILED ALGORITHM COMPARISON")
+        print(" DETAILED ALGORITHM COMPARISON")
         print("="*80)
         
         print(f"\n{'Metric':<30} {'Q-Learning':<20} {'SARSA':<20} {'Winner':<10}")
@@ -317,7 +318,7 @@ class AlgorithmComparison:
         print("="*80)
 
 def main():
-    print("🎯 Starting Algorithm Comparison: Q-Learning vs SARSA")
+    print(" Starting Algorithm Comparison: Q-Learning vs SARSA")
     print("="*60)
     
     # Use unified hyperparameters for fair comparison
@@ -346,8 +347,8 @@ def main():
     # Plot comparison
     comparison.plot_comparison()
     
-    print("\n✅ Comparison completed!")
-    print("📝 Note: Both algorithms used identical hyperparameters for fair comparison.")
+    print("\n Comparison completed!")
+    print(" Note: Both algorithms used identical hyperparameters for fair comparison.")
 
 if __name__ == "__main__":
     main()

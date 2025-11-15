@@ -1,6 +1,7 @@
 ﻿import numpy as np
 import math
 import pickle
+from environment import config
 from collections import defaultdict
 
 # Return the action with the highest Q value for a given state
@@ -22,31 +23,103 @@ def sign3(x):
 # ������state��ɢ����Ԫ��
 def discretize_state(obs):
 	hx, hy, energy, score, dx, dy = map(float, obs)
+	# energy bin size
+	energy_bin = min(int(energy / 20), 5)
+	if abs(dx) <20 and abs(dy) <20:
+		food_dir = 0
+	else:
+		angle = np.arctan2(dy, dx)
+		food_dir = int((angle + np.pi) / (2 * np.pi / 8)) +1
+	direction = env.unwrapped.game.direction
+	if direction == [0, -20]:   # up
+		dir_idx = 0
+	elif direction == [0, 20]:  # down
+		dir_idx = 1
+	elif direction == [-20, 0]: # left
+		dir_idx = 2
+	else:
+	    dir_idx = 3               # right
+
+	game = env.unwrapped.game
+	next_x = (hx + direction[0]) % 600
+	next_y = (hy + direction[1]) % 600
+
+	danger_ahead = 0
+	if [next_x, next_y] in game.core.snake[1:]:
+		danger_ahead = 1
+	elif any(next_x == ox and next_y == oy for ox, oy in game.core.obstacles):
+		danger_ahead = 1
+	elif any(next_x == dx_ and next_y == dy_ for dx_, dy_, _ in game.core.dynamic_obstacles):
+		danger_ahead = 1
 	# position cell size 20
 	# calcaluate the x and y cell of head
-	x_cell = int(hx // 20)
-	y_cell = int(hy // 20)
+	# = int(hx // 20)
+	#y_cell = int(hy // 20)
 	# left -1, no change 0, right 1
-	sdx = sign3(dx)
-	sdy = sign3(dy)
-	# energy bin size 10
-	energy_bin = int(energy // 10)
+	#sdx = sign3(dx)
+	#sdy = sign3(dy)
 	# return as a tuple
-	return (x_cell, y_cell, sdx, sdy, energy_bin)
+	#return (x_cell, y_cell, sdx, sdy, energy_bin)
+	return (energy_bin, food_dir, dir_idx, danger_ahead)
+
+def get_state(env):
+        obs = env.unwrapped.game.get_observation()
+        head_x, head_y, energy, score, dx, dy = obs
+        
+        # Discretize energy into bins (more granular than before)
+        energy_bin = min(int(energy / 20), 5)  # 0-5 bins (better granularity)
+        
+        # Discretize food direction into 8 directions
+        if abs(dx) < 5 and abs(dy) < 5:
+            food_dir = 0  # very close
+        else:
+            angle = np.arctan2(dy, dx)
+            food_dir = int((angle + np.pi) / (2 * np.pi / 8)) + 1  # 1-8
+        
+        # Get current direction
+        direction = env.unwrapped.game.direction
+        if direction == [0, -20]:  # UP
+            dir_idx = 0
+        elif direction == [0, 20]:  # DOWN
+            dir_idx = 1
+        elif direction == [-20, 0]:  # LEFT
+            dir_idx = 2
+        else:  # RIGHT
+            dir_idx = 3
+        
+        # Check if there's danger in front (obstacle, body, dynamic obstacle)
+        game = env.unwrapped.game
+        next_x = (head_x + direction[0]) % config.WINDOW_WIDTH
+        next_y = (head_y + direction[1]) % config.WINDOW_HEIGHT
+        
+        danger_ahead = 0
+        # Check body collision
+        if [next_x, next_y] in game.core.snake[1:]:
+            danger_ahead = 1
+        # Check static obstacles
+        elif any(next_x == ox and next_y == oy for ox, oy in game.core.obstacles):
+            danger_ahead = 1
+        # Check dynamic obstacles
+        elif any(next_x == dx and next_y == dy for dx, dy, _ in game.core.dynamic_obstacles):
+            danger_ahead = 1
+        
+        # Create state tuple (now with danger detection)
+        state = (energy_bin, food_dir, dir_idx, danger_ahead)
+        return state
 
 # Q(s,a) �� Q(s,a) + ��[R + ��Q(s',a') - Q(s,a)]
 class SARSA_Agent:
 	# Initialize
 	# ��Ȼ������Ҫһ��init�������һ��
-	def __init__(self, env, alpha = 0.15, gamma=0.9, epsilon=1.0, max_episode=1000, epsilon_decay=0.995, epsilon_min=0.01, max_steps = 2000):
+	def __init__(self, env, alpha = 0.15, gamma=0.9, epsilon=1.0, episodes=1000, epsilon_decay=0.995, epsilon_min=0.01):
 		self.env = env
 		self.alpha = alpha
 		self.gamma = gamma
 		self.epsilon = epsilon
-		self.max_episode = max_episode
+		self.episodes = episodes
 		self.epsilon_decay = epsilon_decay
 		self.epsilon_min = epsilon_min
-		self.max_steps = max_steps
+		#self.max_steps = max_steps
 		# get the action space in env action space
 		self.n_actions = env.action_space.n
 		# Q table
@@ -63,10 +136,19 @@ class SARSA_Agent:
 	def _epsilon_greedy(self, state):
 		# choose action randomly
 		if np.random.random() < self.epsilon:
-			return np.random.randint(self.n_actions)
+			return self.env.action_space.sample()
 		# choose action with highest Q value
 		else:
 			return argmax_Q(self.Q, state, self.n_actions)
+
+	def update_q_value(self, state, action, reward, next_state, next_action, done):
+		current_q = self.Q[(state, action)]
+		if done:
+			target_q = reward
+		else:
+			next_q = self.Q[(next_state, next_action)]
+			target_q = reward + self.gamma * next_q
+		self.Q[(state, action)] = current_q + self.alpha * (target_q - current_q)
 
 	def SARSA(self):
 		#training history
@@ -74,59 +156,73 @@ class SARSA_Agent:
 		episode_steps = []
 		episode_rewards = []
 
-		for ep in range(self.max_episode):
+		for ep in range(self.episodes):
 			#init
 			# recheck the env
 			# reset() return two values obs and info
-			obs, info = self.env.reset()
+			obs, info = self.env.reset(seed = ep)
 			# some copy from assignemnt
 			terminated = False
 			truncated = False
-			state = discretize_state(obs)
+			state = get_state(self.env)
 			action = self._epsilon_greedy(state)
+			done = False
+			prev_energy = info['energy']
 			step = 0
 			total_reward = 0.0
 			
-			while not (terminated or truncated) and step < self.max_steps:
-				step += 1
-				next_obs, reward, terminated, truncated, info = self.env.step(action)
-				next_state = discretize_state(next_obs)
+			while not done:
+				obs, reward, terminated, truncated, info = self.env.step(action)
+				done = terminated or truncated
+				curr_energy = info['energy']
+				if curr_energy < prev_energy -5:
+					reward -=10
+				prev_energy = curr_energy
+				next_state = get_state(self.env)
+				next_action = self._epsilon_greedy(next_state)
+				self.update_q_value(state, action, reward, next_state, next_action, done)
+				state = next_state
+				action = next_action
 				total_reward += reward
+				step += 1
 
-				if terminated or truncated:
-					td_target = reward
-					td_error = td_target - self.Q[(state, action)]
-					self.Q[(state, action)] += self.alpha * td_error
-					break
-				else:
-					next_action = self._epsilon_greedy(next_state)
-					# R + ��* Q(s', a')
-					td_target = reward + self.gamma * self.Q[(next_state, next_action)]
-					td_error = td_target - self.Q[(state, action)]
-					# update Q
-					self.Q[(state, action)] += self.alpha * td_error
-					# move to next state and action
-					state = next_state
-					action = next_action
-			self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_min)
-			#episode_scores.append(info['score'])
-			# add history
-			episode_steps.append(step)
+			if self.epsilon > self.epsilon_min:
+				self.epsilon *= self.epsilon_decay
 			episode_rewards.append(total_reward)
 
 			# print to obeserve
 			# 10 episodes print once
-			if(ep+1) % 10 == 0:
-				print(f"Episode {ep+1}/{self.max_episode}, Steps: {step}, Total Reward: {total_reward:.1f}")
+			if(ep+1) % 50 == 0:
+				avg_reward = np.mean(episode_rewards[-50:])
+				print(f"Episode {ep + 1}/{self.episodes} | "
+				      f"Avg Reward (last 50): {avg_reward:.2f} | "
+				      f"Epsilon: {self.epsilon:.3f} | "
+				      f"Steps: {step} | "
+				      f"Score: {info['score']}")
 
-		history = {"episode_rewards": episode_rewards, "episode_steps": episode_steps, "Q" : self.Q}
-		return history
+		print(f"\n Training completed! Total episodes: {self.episodes}")
+		print(f"Q-table size: {len(self.Q)} Q-values")
+		#history = {"episode_rewards": episode_rewards, "episode_steps": episode_steps, "Q" : self.Q}
+		return episode_rewards
 
 	def save(self, path):
+		data = {
+			'Q': dict(self.Q),
+			'alpha': self.alpha,
+			'gamma': self.gamma,
+			'epsilon': self.epsilon,
+			'epsilon_min': self.epsilon_min,
+			'epsilon_decay': self.epsilon_decay,
+		}
 		with open(path, 'wb') as f:
-			pickle.dump(dict(self.Q), f)
+			pickle.dump(data, f)
 
 	def load(self, path):
 		with open(path, 'rb') as f:
 			data = pickle.load(f)
-		self.Q = defaultdict(float, data)
+		self.Q = defaultdict(float, data['Q'])
+		self.alpha = data['alpha']
+		self.gamma = data['gamma']
+		self.epsilon = data['epsilon']
+		self.epsilon_min = data['epsilon_min']
+		self.epsilon_decay = data['epsilon_decay']
