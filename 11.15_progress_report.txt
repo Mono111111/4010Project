@@ -1,0 +1,31 @@
+Project Progress Update - Nov 15, 2025 
+
+#Project Title:
+SurviveSnake Agent
+
+#Group Members:
+Wenjing Huang (101261410)
+Siqi Huang (101284265)
+Zhimei Li (101258414)
+
+#What we have done for the past two weeks:
+Wenjing:
+The SARSA reinforcement learning algorithm was implemented and improved. A complete SARSA training process was established and aligned with Q-Learning. An independent Greedy Agent was implemented to evaluate and test the performance of the SARSA agent, and some comparative tests were also written.
+
+Siqi:
+
+Zhimei:
+
+
+#Plans for the next two weeks:
+Wenjing:
+Based on DQN and Q-learning, optimize the performance of SARSA and align the parameter inputs. Optimize the visualization test files for the results, and prepare more tests based on different data to write the project report.
+
+Siqi:
+
+Zhimei:
+
+
+
+
+
