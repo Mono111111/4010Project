@@ -12,6 +12,8 @@ if __name__ == "__main__":
 	# Training
 	#env = SnakeGymEnv(render_mode="human", max_steps=2000)
 	env = SnakeGymEnv(render_mode=None, max_steps=2000)
+
+	# 这里修改可以换别的agent测试
 	agent = SARSA_Agent(env, max_episode = 500)
 	history = agent.SARSA()
 	# Save the trained Q-table
