@@ -6,7 +6,7 @@ from environment.gym_env import SnakeGymEnv
 # 
 # Switch mode here: "train" or "test"
 # 
-MODE = "train"
+MODE = "test"
 
 def train_and_plot():
     print("Starting Q-Learning training")
