@@ -13,6 +13,7 @@ Wenjing:
 The SARSA reinforcement learning algorithm was implemented and improved. A complete SARSA training process was established and aligned with Q-Learning. An independent Greedy Agent was implemented to evaluate and test the performance of the SARSA agent, and some comparative tests were also written.
 
 Siqi:
+In the past two weeks, I focused on implementing the DQN reinforcement learning algorithm for our project. I implemented the initial DQN pipeline and connected it with our SnakeGym environment.
 
 Zhimei:
 Over the past two weeks, I organized and refined the environment code structure, implemented the Q-Learning algorithm and its testing process, and conducted algorithm comparison experiments.
@@ -23,6 +24,7 @@ Wenjing:
 Based on DQN and Q-learning, optimize the performance of SARSA and align the parameter inputs. Optimize the visualization test files for the results, and prepare more tests based on different data to write the project report.
 
 Siqi:
+For the next two weeks, I plan to continue optimizing the DQN implementation by tuning hyperparameters such as learning rate, batch size, and exploration decay. 
 
 Zhimei:
 For the next two weeks, I plan to continue algorithm comparison and performance analysis, conduct multiple experiments, and work on writing the final report.
