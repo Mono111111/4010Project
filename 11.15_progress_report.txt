@@ -15,6 +15,7 @@ The SARSA reinforcement learning algorithm was implemented and improved. A compl
 Siqi:
 
 Zhimei:
+Over the past two weeks, I organized and refined the environment code structure, implemented the Q-Learning algorithm and its testing process, and conducted algorithm comparison experiments.
 
 
 #Plans for the next two weeks:
@@ -24,6 +25,7 @@ Based on DQN and Q-learning, optimize the performance of SARSA and align the par
 Siqi:
 
 Zhimei:
+For the next two weeks, I plan to continue algorithm comparison and performance analysis, conduct multiple experiments, and work on writing the final report.
 
 
 
