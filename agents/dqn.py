@@ -2,6 +2,7 @@
 import random
 import numpy as np
 from collections import deque
+from environment import config
 
 import torch
 import torch.nn as nn
@@ -22,6 +23,7 @@ class QNetwork(nn.Module):
 
     def forward(self, x):
         return self.net(x)
+
 
 
 class ReplayBuffer:
@@ -48,29 +50,71 @@ class ReplayBuffer:
 
 
 class DQN_Agent:
+    def get_state(self):
+        obs = self.env.unwrapped.game.get_observation()
+        head_x, head_y, energy, score, dx, dy = obs
+        energy_bin = min(int(energy / 20), 5)
+        energy_features = np.zeros(6, dtype=np.float32)
+        energy_features[energy_bin] = 1.0
+
+        if abs(dx) <5 and abs(dy) <5:
+            food_dir = 0
+        else:
+            angle = np.arctan2(dy, dx)
+            food_dir = min(int((angle + np.pi) / (2 * np.pi / 8)) + 1, 8)
+        food_dir_features = np.zeros(9, dtype=np.float32)
+        food_dir_features[food_dir] = 1.0
+
+        # Get current direction
+        direction = self.env.unwrapped.game.direction
+        if direction == [0, -20]:  # UP
+            dir_idx = 0
+        elif direction == [0, 20]:  # DOWN
+            dir_idx = 1
+        elif direction == [-20, 0]:  # LEFT
+            dir_idx = 2
+        else:  # RIGHT
+            dir_idx = 3
+        dir_features = np.zeros(4, dtype=np.float32)
+        dir_features[dir_idx] = 1.0
+        
+        # Check if there's danger in front (obstacle, body, dynamic obstacle)
+        game = self.env.unwrapped.game
+        next_x = (head_x + direction[0]) % config.WINDOW_WIDTH
+        next_y = (head_y + direction[1]) % config.WINDOW_HEIGHT
+
+        danger_ahead = 0
+        # Check body collision
+        if [next_x, next_y] in game.core.snake[1:]:
+            danger_ahead = 1
+        # Check static obstacles
+        elif any(next_x == ox and next_y == oy for ox, oy in game.core.obstacles):
+            danger_ahead = 1
+        # Check dynamic obstacles
+        elif any(next_x == dx and next_y == dy for dx, dy, _ in game.core.dynamic_obstacles):
+            danger_ahead = 1
+        return np.concatenate([energy_features, food_dir_features, dir_features, [danger_ahead]])
+
     # DQN agent using Q-network, target network, replay buffer, and epsilon-greedy
-    def __init__(
-        self,
-        env,
-        gamma=0.99,
-        lr=5e-4,
-        batch_size=128,
-        buffer_size=100_000,
-        target_update_freq=1000,
-        epsilon_start=1.0,
-        epsilon_end=0.05,
-        epsilon_decay_steps=50_000,
-        max_steps_per_episode=2000,
-        hidden_dim=128,
-        device=None,
-    ):
+    def __init__(self, env,
+                 gamma=0.99,
+                 batch_size=64,
+                 lr=1e-3,
+                 replay_capacity=100_000,
+                 epsilon_start=1.0,
+                 epsilon_end=0.05,
+                 epsilon_decay_steps=50_000,
+                 max_steps_per_episode=2000,
+                 hidden_dim=128,
+                 target_update_freq=500,
+                 device="cpu"):
         self.env = env
         self.gamma = gamma
         self.batch_size = batch_size
         self.max_steps = max_steps_per_episode
 
         # State & action dimensions
-        self.state_dim = env.observation_space.shape[0]
+        self.state_dim = 20
         self.n_actions = env.action_space.n
 
         # Set device
@@ -88,7 +132,8 @@ class DQN_Agent:
         self.optimizer = optim.Adam(self.q_net.parameters(), lr=lr)
 
         # Replay buffer
-        self.replay = ReplayBuffer(capacity=buffer_size)
+        self.replay_capacity = replay_capacity
+        self.replay = ReplayBuffer(capacity=self.replay_capacity)
 
         # Epsilon-greedy parameters
         self.epsilon_start = epsilon_start
@@ -158,25 +203,35 @@ class DQN_Agent:
 
         for ep in range(max_episode):
             obs, info = self.env.reset()
+            state = self.get_state()
             done = False
             truncated = False
             step = 0
             total_reward = 0.0
 
+            prev_energy = info.get("energy", None)
+
             while (not done) and (not truncated) and step < self.max_steps:
                 step += 1
                 self.total_steps += 1
 
-                action = self._epsilon_greedy(obs, greedy=False)
+                action = self._epsilon_greedy(state, greedy=False)
                 next_obs, reward, done, truncated, info = self.env.step(action)
+                next_state = self.get_state()
+                curr_energy = info.get("energy", None)
+                if prev_energy is not None and curr_energy is not None:
+                    if curr_energy < prev_energy - 5:
+                        reward -= 10.0
+                prev_energy = curr_energy
+                
                 total_reward += reward
 
                 done_flag = float(done or truncated)
 
-                self.replay.push(obs, action, reward, next_obs, done_flag)
+                self.replay.push(state, action, reward, next_state, done_flag)
                 self._update_network()
 
-                obs = next_obs
+                state = next_state
 
             episode_rewards.append(total_reward)
             episode_steps.append(step)
@@ -211,6 +266,7 @@ class DQN_Agent:
 
         for ep in range(n_episodes):
             obs, info = self.env.reset()
+            state = self.get_state()
             done = False
             truncated = False
             step = 0
@@ -218,8 +274,9 @@ class DQN_Agent:
 
             while (not done) and (not truncated) and step < self.max_steps:
                 step += 1
-                action = self._epsilon_greedy(obs, greedy=True)
+                action = self._epsilon_greedy(state, greedy=True)
                 obs, reward, done, truncated, info = self.env.step(action)
+                state = self.get_state()
                 total_reward += reward
 
                 if render:
