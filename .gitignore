@@ -1,32 +1,43 @@
-# VS
+# VS / VSCode
 .vs/
+.vscode/
 *.db
 *.db-shm
 *.db-wal
 *.json
 
-# Python
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Ignore Python virtual environment
+# Python virtual environments
 env/
 env1/
 .venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+venv/
+ENV/
+include/
+Lib/
+Scripts/
 
-# Ignore torch and model binaries
+# Torch 
 *.pt
 *.pth
+*.pkl
 *.dll
 *.so
 *.dylib
 *.zip
 
-# Ignore notebooks autosaves, cache
+# Images
+*.png
+
+# Jupyter
 .ipynb_checkpoints/
+
+# System
+.DS_Store
+Thumbs.db
+desktop.ini
