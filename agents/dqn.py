@@ -97,7 +97,7 @@ class DQN_Agent:
 
     # DQN agent using Q-network, target network, replay buffer, and epsilon-greedy
     def __init__(self, env,
-                 gamma=0.99,
+                 gamma=0.95,
                  batch_size=64,
                  lr=1e-3,
                  replay_capacity=100_000,

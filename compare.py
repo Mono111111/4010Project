@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from environment.gym_env import SnakeGymEnv
 from agents.q_learning import QLearningAgent
 from agents.sarsa import SARSA_Agent, get_state, argmax_Q
+from agents.dqn import DQN_Agent
 from agents.agent import Greedy_Agent
 import time
 
@@ -106,6 +107,52 @@ class AlgorithmComparison:
         
         return agent
     
+    def train_dqn(self):
+        print("\n" + "="*60)
+        print(" Training DQN Agent...")
+        print("="*60)
+    
+        env = SnakeGymEnv(render_mode=None, max_steps=self.max_steps)
+
+        # Use the same hyperparameters as your standalone train_dqn.py
+        agent = DQN_Agent(
+            env,
+            gamma=0.99,                 # more stable long-term reward propagation
+            lr=1e-3,
+            batch_size=64,
+            replay_capacity=100000,
+            epsilon_start=1.0,
+            epsilon_end=0.05,
+            epsilon_decay_steps=50_000,  # faster decay → starts exploiting earlier
+            max_steps_per_episode=self.max_steps,
+            hidden_dim=128,
+            target_update_freq=500,     # sync target net more often
+        )
+
+        start_time = time.time()
+        history = agent.train(max_episode=self.episodes)
+        training_time = time.time() - start_time
+
+        # Save trained model
+        agent.save("dqn_snake.pt")
+
+        # Count total parameters
+        total_params = sum(p.numel() for p in agent.q_net.parameters())
+
+        # Store results for later comparison
+        self.results['DQN'] = {
+            'rewards': history['episode_rewards'],
+            'steps': history['episode_steps'],
+            'training_time': training_time,
+            'network_params': total_params
+        }
+
+        print(f" DQN training completed in {training_time:.2f}s")
+        print(f" Network parameters: {total_params:,}")
+        print(f" Final average reward (last 50 eps): {np.mean(history['episode_rewards'][-50:]):.2f}")
+
+        return agent
+
     def evaluate_agent(self, agent_type, model_path):
         """Evaluate trained agent"""
         print(f"\n Evaluating {agent_type}...")
@@ -116,10 +163,13 @@ class AlgorithmComparison:
             agent = QLearningAgent(env)
             agent.load(model_path)
             agent.epsilon = 0.0  # Greedy policy
-        else:  # SARSA
+        elif agent_type == 'SARSA':  # SARSA
             agent = SARSA_Agent(env)
             agent.load(model_path)
             agent.epsilon = 0.0
+        elif agent_type == 'DQN':
+            agent = DQN_Agent(env, max_steps_per_episode=self.max_steps)
+            agent.load(model_path)
         
         eval_rewards = []
         eval_steps = []
@@ -138,9 +188,12 @@ class AlgorithmComparison:
                     state = agent.get_state()
                     q_values = agent.get_q_values(state)
                     action = int(np.argmax(q_values))
-                else:  # SARSA
+                elif agent_type == 'SARSA':  # SARSA
                     state = get_state(env)
                     action = int(argmax_Q(agent.Q, state, agent.n_actions))
+                elif agent_type == 'DQN':
+                    state = agent.get_state()
+                    action = agent._epsilon_greedy(state, greedy=True)
                 
                 obs, reward, terminated, truncated, info = env.step(action)
                 total_reward += reward
@@ -180,17 +233,18 @@ class AlgorithmComparison:
         
         # 1. Training Rewards Curve
         ax1 = axes[0, 0]
-        for name in ['Q-Learning', 'SARSA']:
+        colors = {'Q-Learning': 'blue', 'SARSA': 'green', 'DQN': 'red'}
+        for name in ['Q-Learning', 'SARSA', 'DQN']:
             if name in self.results:
                 rewards = self.results[name]['rewards']
-                ax1.plot(rewards, alpha=0.3, label=f'{name} (raw)')
+                ax1.plot(rewards, alpha=0.3, color=colors[name], label=f'{name} (raw)')
                 
                 # Moving average
                 window = 50
                 if len(rewards) >= window:
                     moving_avg = np.convolve(rewards, np.ones(window)/window, mode='valid')
                     ax1.plot(range(window-1, len(rewards)), moving_avg, 
-                            linewidth=2, label=f'{name} (MA-{window})')
+                            color=colors[name], linewidth=2, label=f'{name} (MA-{window})')
         
         ax1.set_xlabel('Episode')
         ax1.set_ylabel('Total Reward')
@@ -202,13 +256,16 @@ class AlgorithmComparison:
         ax2 = axes[0, 1]
         eval_data = []
         labels = []
-        for name in ['Q-Learning', 'SARSA']:
+        for name in ['Q-Learning', 'SARSA', 'DQN']:
             if name in self.results and 'evaluation' in self.results[name]:
                 eval_data.append(self.results[name]['evaluation']['rewards'])
                 labels.append(name)
         
         if eval_data:
-            ax2.boxplot(eval_data, labels=labels)
+            bp = ax2.boxplot(eval_data, labels=labels, patch_artist=True)
+            for patch, name in zip(bp['boxes'], labels):
+                patch.set_facecolor(colors[name])
+                patch.set_alpha(0.6)
             ax2.set_ylabel('Reward')
             ax2.set_title('Evaluation Reward Distribution')
             ax2.grid(True, alpha=0.3, axis='y')
@@ -216,12 +273,15 @@ class AlgorithmComparison:
         # 3. Scores Comparison
         ax3 = axes[1, 0]
         scores_data = []
-        for name in ['Q-Learning', 'SARSA']:
+        for name in ['Q-Learning', 'SARSA', 'DQN']:
             if name in self.results and 'evaluation' in self.results[name]:
                 scores_data.append(self.results[name]['evaluation']['scores'])
         
         if scores_data:
-            ax3.boxplot(scores_data, labels=labels)
+            bp = ax3.boxplot(scores_data, labels=labels, patch_artist=True)
+            for patch, name in zip(bp['boxes'], labels):
+                patch.set_facecolor(colors[name])
+                patch.set_alpha(0.6)
             ax3.set_ylabel('Score')
             ax3.set_title('Game Score Distribution')
             ax3.grid(True, alpha=0.3, axis='y')
@@ -232,13 +292,17 @@ class AlgorithmComparison:
         
         summary_text = " Algorithm Comparison Summary\n\n"
         
-        for name in ['Q-Learning', 'SARSA']:
+        for name in ['Q-Learning', 'SARSA', 'DQN']:
             if name in self.results:
                 summary_text += f"{'='*40}\n"
                 summary_text += f"{name}:\n"
                 summary_text += f"{'='*40}\n"
                 summary_text += f"Training Time: {self.results[name]['training_time']:.2f}s\n"
-                summary_text += f"Q-table Size: {self.results[name]['q_table_size']} states\n"
+                
+                if name == 'DQN':
+                    summary_text += f"Network Params: {self.results[name]['network_params']:,}\n"
+                else:
+                    summary_text += f"Q-table Size: {self.results[name].get('q_table_size', 'N/A')} states\n"
                 
                 if 'evaluation' in self.results[name]:
                     eval_res = self.results[name]['evaluation']
@@ -280,45 +344,51 @@ class AlgorithmComparison:
         
         for metric_name, metric_key, better in metrics:
             values = {}
-            for name in ['Q-Learning', 'SARSA']:
+            for name in ['Q-Learning', 'SARSA', 'DQN']:
                 if name in self.results:
-                    keys = metric_key.split('.')
-                    val = self.results[name]
-                    for k in keys:
-                        if k in val:
-                            val = val[k]
+                    if metric_key == 'model_size':
+                        # Special handling for model size
+                        if name == 'DQN':
+                            val = f"{self.results[name]['network_params']:,} params"
                         else:
-                            val = None
-                            break
-                    values[name] = val
+                            val = f"{self.results[name].get('q_table_size', 'N/A')} states"
+                        values[name] = val
+                    else:
+                        keys = metric_key.split('.')
+                        val = self.results[name]
+                        for k in keys:
+                            if k in val:
+                                val = val[k]
+                            else:
+                                val = None
+                                break
+                        values[name] = val
             
             # Format values
             q_val = values.get('Q-Learning')
             s_val = values.get('SARSA')
+            d_val = values.get('DQN')
             
-            if q_val is not None and s_val is not None:
-                # Determine winner
-                if better == 'higher':
-                    winner = 'Q-Learning' if q_val > s_val else 'SARSA' if s_val > q_val else 'Tie'
-                else:
-                    winner = 'Q-Learning' if q_val < s_val else 'SARSA' if s_val < q_val else 'Tie'
-                
-                # Format display
-                if isinstance(q_val, float):
-                    q_str = f"{q_val:.2f}"
-                    s_str = f"{s_val:.2f}"
-                else:
-                    q_str = str(q_val)
-                    s_str = str(s_val)
-                
-                print(f"{metric_name:<30} {q_str:<20} {s_str:<20} {winner:<10}")
+            # Format display
+            if metric_key == 'model_size':
+                # Model size is already formatted as string
+                print(f"{metric_name:<30} {str(q_val):<20} {str(s_val):<20} {str(d_val):<20}")
+            elif all(isinstance(v, (int, float)) for v in [q_val, s_val, d_val] if v is not None):
+                # Numeric comparison
+                q_str = f"{q_val:.2f}" if q_val is not None else "N/A"
+                s_str = f"{s_val:.2f}" if s_val is not None else "N/A"
+                d_str = f"{d_val:.2f}" if d_val is not None else "N/A"
+                print(f"{metric_name:<30} {q_str:<20} {s_str:<20} {d_str:<20}")
             else:
-                print(f"{metric_name:<30} {'N/A':<20} {'N/A':<20} {'N/A':<10}")
+                q_str = str(q_val) if q_val is not None else "N/A"
+                s_str = str(s_val) if s_val is not None else "N/A"
+                d_str = str(d_val) if d_val is not None else "N/A"
+                print(f"{metric_name:<30} {q_str:<20} {s_str:<20} {d_str:<20}")
         
         print("="*80)
 
 def main():
-    print(" Starting Algorithm Comparison: Q-Learning vs SARSA")
+    print(" Starting Algorithm Comparison: Q-Learning vs SARSA vs DQN")
     print("="*60)
     
     # Use unified hyperparameters for fair comparison
@@ -336,10 +406,12 @@ def main():
     # Train both agents
     comparison.train_qlearning()
     comparison.train_sarsa()
+    comparison.train_dqn()
     
     # Evaluate both agents
     comparison.evaluate_agent('Q-Learning', 'q_learning_agent.pkl')
     comparison.evaluate_agent('SARSA', 'sarsa_q_table.pkl')
+    comparison.evaluate_agent('DQN', 'dqn_snake.pt')
     
     # Print detailed comparison
     comparison.print_detailed_comparison()
