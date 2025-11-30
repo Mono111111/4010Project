@@ -1,0 +1,31 @@
+Project Progress Update - Nov 30, 2025 
+
+#Project Title:
+SurviveSnake Agent
+
+#Group Members:
+Wenjing Huang (101261410)
+Siqi Huang (101284265)
+Zhimei Li (101258414)
+
+#What we have done for the past two weeks:
+Wenjing:
+The existing environment and algorithms have been repaired and improved. Search for relevant literature for the final report, and modify the script as needed to generate clearer images. Start writing the final report.
+
+Siqi:
+I ran and verified the DQN training process to ensure the model works as expected. I also reviewed the generated results and prepared  for the final report.
+
+Zhimei:
+Over the past two weeks, I integrated the DQN algorithm into the performance comparison tests, while preparing materials for the result demo and report. 
+
+
+
+#Plans for the next two weeks:
+Wenjing:
+Based on the content of the algorithm experiment, write the introduction and the SARSA section of the final report, and search for relevant papers. 
+
+Siqi:
+I will refine the DQN analysis for the final report and help integrate the overall experiment results into the comparison section.
+
+Zhimei:
+In the next two weeks, I plan to use the experimental analysis result to finish the final report.
