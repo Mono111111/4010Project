@@ -229,7 +229,7 @@ class AlgorithmComparison:
     
     def plot_comparison(self):
         """Plot comprehensive comparison"""
-        fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+        fig, axes = plt.subplots(2, 2, figsize=(18, 12))
         
         # 1. Training Rewards Curve
         ax1 = axes[0, 0]
@@ -324,12 +324,12 @@ class AlgorithmComparison:
     
     def print_detailed_comparison(self):
         """Print detailed comparison table"""
-        print("\n" + "="*80)
+        print("\n" + "="*100)
         print(" DETAILED ALGORITHM COMPARISON")
-        print("="*80)
+        print("="*100)
         
-        print(f"\n{'Metric':<30} {'Q-Learning':<20} {'SARSA':<20} {'Winner':<10}")
-        print("-"*80)
+        print(f"\n{'Metric':<30} {'Q-Learning':<15} {'SARSA':<15} {'DQN':<15} {'Winner':<10}")
+        print("-"*100)
         
         metrics = [
             ('Training Time (s)', 'training_time', 'lower'),
@@ -342,9 +342,11 @@ class AlgorithmComparison:
             ('Success Rate (%)', 'evaluation.success_rate', 'higher'),
         ]
         
+        algorithm_name = ['Q-Learning', 'SARSA', 'DQN']
+        
         for metric_name, metric_key, better in metrics:
             values = {}
-            for name in ['Q-Learning', 'SARSA', 'DQN']:
+            for name in algorithm_name:
                 if name in self.results:
                     if metric_key == 'model_size':
                         # Special handling for model size
@@ -357,7 +359,7 @@ class AlgorithmComparison:
                         keys = metric_key.split('.')
                         val = self.results[name]
                         for k in keys:
-                            if k in val:
+                            if isinstance(val, dict) and k in val:
                                 val = val[k]
                             else:
                                 val = None
@@ -369,23 +371,39 @@ class AlgorithmComparison:
             s_val = values.get('SARSA')
             d_val = values.get('DQN')
             
+            #Winner
+            winner = "N/A"
+            numeric_vals = {}
+            for algo, v in [('Q-Learning', q_val), ('SARSA', s_val), ('DQN', d_val)]:
+                if isinstance(v, (int, float)):
+                    numeric_vals[algo] = v
+            if numeric_vals:
+                if better == 'higher':
+                    winner = max(numeric_vals, key=numeric_vals.get)
+                else:
+                    winner = min(numeric_vals, key=numeric_vals.get)
+
             # Format display
             if metric_key == 'model_size':
+                #just for ensure
                 # Model size is already formatted as string
-                print(f"{metric_name:<30} {str(q_val):<20} {str(s_val):<20} {str(d_val):<20}")
+                q_str = str(q_val) if q_val is not None else "N/A"
+                s_str = str(s_val) if s_val is not None else "N/A"
+                d_str = str(d_val) if d_val is not None else "N/A"
+                print(f"{metric_name:<30} {str(q_val):<20} {str(s_val):<20} {str(d_val):<20}{winner:<10}")
             elif all(isinstance(v, (int, float)) for v in [q_val, s_val, d_val] if v is not None):
                 # Numeric comparison
                 q_str = f"{q_val:.2f}" if q_val is not None else "N/A"
                 s_str = f"{s_val:.2f}" if s_val is not None else "N/A"
                 d_str = f"{d_val:.2f}" if d_val is not None else "N/A"
-                print(f"{metric_name:<30} {q_str:<20} {s_str:<20} {d_str:<20}")
+                print(f"{metric_name:<30} {q_str:<20} {s_str:<20} {d_str:<20}{winner:<10}")
             else:
                 q_str = str(q_val) if q_val is not None else "N/A"
                 s_str = str(s_val) if s_val is not None else "N/A"
                 d_str = str(d_val) if d_val is not None else "N/A"
-                print(f"{metric_name:<30} {q_str:<20} {s_str:<20} {d_str:<20}")
+                print(f"{metric_name:<30} {q_str:<20} {s_str:<20} {d_str:<20}{winner:<10}")
         
-        print("="*80)
+        print("="*100)
 
 def main():
     print(" Starting Algorithm Comparison: Q-Learning vs SARSA vs DQN")
