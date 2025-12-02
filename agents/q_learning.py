@@ -129,19 +129,6 @@ class QLearningAgent:
                     reward -= 10  # Extra penalty for hitting obstacle/self-bite
                 prev_energy = curr_energy
                 
-                # Reward shaping: encourage moving toward food
-                #new_head_x, new_head_y, _, _, _, _ = self.env.unwrapped.game.get_observation()
-                #foods = self.env.unwrapped.game.core.foods
-                #fx, fy, _ = min(foods, key=lambda f: abs(f[0]-old_head_x)+abs(f[1]-old_head_y))
-                
-                #old_dist = abs(fx - old_head_x) + abs(fy - old_head_y)
-                #new_dist = abs(fx - new_head_x) + abs(fy - new_head_y)
-                
-                #if new_dist < old_dist:
-                #    reward += 0.2  # bonus for getting closer
-                #else:
-                #    reward -= 0.2  # penalty for getting farther
-                
                 # Get next state
                 next_state = self.get_state()
                 

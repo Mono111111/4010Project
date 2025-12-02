@@ -82,11 +82,11 @@ class AlgorithmComparison:
         agent = SARSA_Agent(
             env,
             alpha=self.alpha,           # Use unified hyperparameters
-            gamma=self.gamma,           # Use unified hyperparameters
-            epsilon=self.epsilon,       # Use unified hyperparameters
+            gamma=self.gamma,           
+            epsilon=self.epsilon,       
             episodes=self.episodes,
-            epsilon_min=self.epsilon_min,  # Use unified hyperparameters
-            epsilon_decay=self.epsilon_decay,  # Use unified hyperparameters
+            epsilon_min=self.epsilon_min,  
+            epsilon_decay=self.epsilon_decay,  
         )
         
         start_time = time.time()
@@ -123,7 +123,7 @@ class AlgorithmComparison:
             replay_capacity=100000,
             epsilon_start=1.0,
             epsilon_end=0.05,
-            epsilon_decay_steps=50_000,  # faster decay → starts exploiting earlier
+            epsilon_decay_steps=50_000,  # faster decay -> starts exploiting earlier
             max_steps_per_episode=self.max_steps,
             hidden_dim=128,
             target_update_freq=500,     # sync target net more often
@@ -328,7 +328,7 @@ class AlgorithmComparison:
         print(" DETAILED ALGORITHM COMPARISON")
         print("="*100)
         
-        print(f"\n{'Metric':<30} {'Q-Learning':<15} {'SARSA':<15} {'DQN':<15} {'Winner':<10}")
+        print(f"\n{'Metric':<30} {'Q-Learning':<20} {'SARSA':<20} {'DQN':<20} {'Winner':<10}")
         print("-"*100)
         
         metrics = [

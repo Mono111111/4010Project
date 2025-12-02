@@ -20,7 +20,6 @@ def sign3(x):
 	else:
 		return 0
 
-# ������state��ɢ����Ԫ��
 def discretize_state(obs):
 	hx, hy, energy, score, dx, dy = map(float, obs)
 	# energy bin size
@@ -51,15 +50,7 @@ def discretize_state(obs):
 		danger_ahead = 1
 	elif any(next_x == dx_ and next_y == dy_ for dx_, dy_, _ in game.core.dynamic_obstacles):
 		danger_ahead = 1
-	# position cell size 20
-	# calcaluate the x and y cell of head
-	# = int(hx // 20)
-	#y_cell = int(hy // 20)
-	# left -1, no change 0, right 1
-	#sdx = sign3(dx)
-	#sdy = sign3(dy)
-	# return as a tuple
-	#return (x_cell, y_cell, sdx, sdy, energy_bin)
+
 	return (energy_bin, food_dir, dir_idx, danger_ahead)
 
 def get_state(env):
@@ -107,10 +98,9 @@ def get_state(env):
         state = (energy_bin, food_dir, dir_idx, danger_ahead)
         return state
 
-# Q(s,a) �� Q(s,a) + ��[R + ��Q(s',a') - Q(s,a)]
+# Q(s,a)
 class SARSA_Agent:
 	# Initialize
-	# ��Ȼ������Ҫһ��init�������һ��
 	def __init__(self, env, alpha = 0.15, gamma=0.9, epsilon=1.0, episodes=1000, epsilon_decay=0.995, epsilon_min=0.01):
 		self.env = env
 		self.alpha = alpha
@@ -202,7 +192,6 @@ class SARSA_Agent:
 
 		print(f"\n Training completed! Total episodes: {self.episodes}")
 		print(f"Q-table size: {len(self.Q)} Q-values")
-		#history = {"episode_rewards": episode_rewards, "episode_steps": episode_steps, "Q" : self.Q}
 		return episode_rewards
 
 	def save(self, path):

@@ -20,7 +20,6 @@ def sign3(x):
 	else:
 		return 0
 
-# 将连续state离散化成元组
 def discretize_state(obs):
 	hx, hy, energy, score, dx, dy = map(float, obs)
 	# position cell size 20

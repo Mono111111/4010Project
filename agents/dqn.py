@@ -10,7 +10,7 @@ import torch.optim as optim
 
 
 class QNetwork(nn.Module):
-    # Simple 2-layer fully connected network mapping state → Q-values
+    # Simple 2-layer fully connected network mapping state -> Q-values
     def __init__(self, state_dim, action_dim, hidden_dim=128):
         super().__init__()
         self.net = nn.Sequential(
