@@ -52,4 +52,4 @@ Getting Started:
 3. Run the desired training or demo script, e.g.:
    python train_qlearning.py
    python random_agent_demo.py
-1. python compare.py
+   python compare.py
