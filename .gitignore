@@ -1,4 +1,4 @@
-# VS / VSCode
+﻿# VS / VSCode
 .vs/
 .vscode/
 *.db
@@ -31,8 +31,6 @@ Scripts/
 *.dylib
 *.zip
 
-# Images
-*.png
 
 # Jupyter
 .ipynb_checkpoints/
