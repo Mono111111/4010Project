@@ -3,15 +3,17 @@ import matplotlib.pyplot as plt
 from environment.gym_env import SnakeGymEnv
 from agents.dqn import DQN_Agent
 
-# Sensitivity configurations
-episodes = 800
+# ========== FAST SETTINGS ==========
+EPISODES = 250
+MAX_STEPS = 300
 
+# Sensitivity parameter values
 test_params = {
     "gamma": [0.8, 0.9, 0.95, 0.99],
     "batch_size": [32, 64, 128],
     "lr": [1e-4, 5e-4, 1e-3],
     "epsilon_start": [1.0, 0.8, 0.5],
-    "epsilon_decay_steps": [20000, 50000, 80000],
+    "epsilon_decay_steps": [5000, 20000, 50000],
 }
 
 # Base hyperparameters
@@ -21,15 +23,15 @@ base_params = {
     "lr": 1e-3,
     "epsilon_start": 1.0,
     "epsilon_end": 0.05,
-    "epsilon_decay_steps": 50000,
+    "epsilon_decay_steps": 20000,
 }
 
-# Run a single DQN training session
+# Run experiment
 def run_experiment(gamma, batch_size, lr,
                    epsilon_start, epsilon_decay_steps,
                    epsilon_end=0.05):
 
-    env = SnakeGymEnv(render_mode=None, max_steps=2000)
+    env = SnakeGymEnv(render_mode=None, max_steps=MAX_STEPS)
 
     agent = DQN_Agent(
         env,
@@ -41,12 +43,11 @@ def run_experiment(gamma, batch_size, lr,
         epsilon_decay_steps=epsilon_decay_steps,
     )
 
-    history = agent.train(max_episode=episodes)
+    result = agent.train(max_episode=EPISODES)
     env.close()
+    return np.array(result["episode_rewards"])
 
-    return np.array(history["episode_rewards"])
-
-# Plot curves & save figs
+# Plot sensitivity
 def plot_sensitivity(param_name, values, fixed_params, title_label):
     plt.figure(figsize=(10, 6))
 
@@ -58,15 +59,15 @@ def plot_sensitivity(param_name, values, fixed_params, title_label):
 
         rewards = run_experiment(**params)
 
-        # Moving avg
-        window_size = min(50, len(rewards))
-        moving_avg = np.convolve(rewards, np.ones(window_size)/window_size, mode="valid")
+        # Moving average
+        window = min(10, len(rewards))
+        smooth = np.convolve(rewards, np.ones(window)/window, mode="valid")
 
-        plt.plot(moving_avg, label=f"{param_name} = {val}", linewidth=2)
+        plt.plot(smooth, label=f"{param_name} = {val}", linewidth=2)
 
-    plt.title(f"DQN Sensitivity – {title_label}", fontsize=15, fontweight="bold")
-    plt.xlabel("Episode", fontsize=12)
-    plt.ylabel("Moving Average of Reward", fontsize=12)
+    plt.title(f"DQN Sensitivity — {title_label}", fontsize=15, fontweight="bold")
+    plt.xlabel("Episode")
+    plt.ylabel("Avg Reward (Moving Avg)")
     plt.grid(alpha=0.3)
     plt.legend()
     plt.tight_layout()
@@ -79,7 +80,7 @@ def plot_sensitivity(param_name, values, fixed_params, title_label):
 # Run all tests
 def run_all_tests():
 
-    param_labels = {
+    labels = {
         "gamma": "Discount Factor (γ)",
         "batch_size": "Batch Size",
         "lr": "Learning Rate",
@@ -87,15 +88,15 @@ def run_all_tests():
         "epsilon_decay_steps": "Exploration Decay Steps",
     }
 
-    print("DQN Hyperparameter Sensitivity")
-    print(f"Base Config:\n{base_params}\n")
+    print("DQN Sensitivity — FAST VERSION")
+    print(f"Episodes: {EPISODES}, Max Steps: {MAX_STEPS}\n")
 
     for param_name in test_params:
-        print(f"Testing: {param_labels[param_name]}")
+        print(f"Testing: {labels[param_name]}")
         plot_sensitivity(param_name, test_params[param_name],
-                         base_params, param_labels[param_name])
+                         base_params, labels[param_name])
 
-    print("✓ All DQN sensitivity plots completed!")
+    print("✓ ALL 5 PLOTS GENERATED SUCCESSFULLY!")
 
 if __name__ == "__main__":
     run_all_tests()
